@@ -21,9 +21,8 @@ def create_page():
             return cur.fetchall(), cur.description
 
     conn = init_connection()
-    st.write("Connected!")
 
-    rows, desc = run_query("select * from public.vibration order by timestamp desc limit 10;")
+    rows, desc = run_query("select * from public.vibration order by timestamp desc limit 20")
     df = pd.DataFrame(rows)
     df.columns = [col.name for col in desc]
 
