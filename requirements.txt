@@ -1,5 +1,5 @@
 streamlit==1.11.1
-streamlit-option-menu==0.3.2
 psycopg2-binary==2.9.3
 pandas==1.4.3
 plotly==5.9.0
+jsonschema==4.9.1

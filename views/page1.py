@@ -1,6 +1,40 @@
 import pandas as pd
 import streamlit as st
 import psycopg2
+import random
+import numpy as np
+import time
+from datetime import datetime
+
+
+def init():
+    st.markdown("### 我是分頁1")
+
+
+def test():
+    left, right = st.columns(2)
+
+    with left:
+        st.markdown("# LEFT")
+        chart_data = pd.DataFrame(
+            np.random.randn(20, 3),
+            columns=['a', 'b', 'c']
+        )
+        st.write(chart_data)
+        st.line_chart(chart_data)
+
+    with right:
+        st.markdown("# RIGHT")
+        et = st.empty()
+        while True:
+            with et.container():
+                chart_data = pd.DataFrame(
+                    np.random.randn(20, 3),
+                    columns=['a', 'b', 'c']
+                )
+                st.write(chart_data)
+                st.line_chart(chart_data)
+                time.sleep(1)
 
 
 def create_page():
@@ -28,12 +62,7 @@ def create_page():
 
     st.write(df)
 
-    # Print results.
-    # for row in rows:
-    #     st.write(f"{row[0]} has a :{row[1]}:")
-
-
-
+    time.sleep(2)
 
     # col1, col2, col3 = st.columns(3)
     # col1.write("擠錠溫度")
