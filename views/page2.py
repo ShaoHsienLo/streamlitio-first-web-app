@@ -1,8 +1,8 @@
-# importing required libraries
-
+import altair as alt
+import numpy as np
 import streamlit as st
-
-import time
+import pandas as pd
+import json
 
 
 def init():
@@ -10,36 +10,42 @@ def init():
 
 
 def create_page():
-    # creating a simple 30 seconds countdown using st.empty
+    df = pd.DataFrame.from_records(json.loads('{"a": 1, "b": 2, "c": 3}'), index=[0])
+    st.write(df)
 
-    with st.empty():
-        i = 5
-
-        while i > 0:
-            st.write(f"{i} seconds left")
-
-            time.sleep(1)
-
-            i = i - 1
-
-        st.write("Time's up!!")  # text to display after the countdown ends
-
-    # creating a single element placeholder
-
-    placeholder = st.empty()
-
-    # adding some text into the placeholder
-
-    placeholder.text("Initial text")
-
-    # replacing the initial text with multi-elements
-
-    # with placeholder.container():
-    #     st.write("This is element 1")
+    # chart_row = st.empty()
     #
-    #     st.write("This is element 2")
+    # for i in range(10):
+    #     df = pd.DataFrame(
+    #         np.random.randn(100, 3),
+    #         columns=['a', 'b', 'c'])
+    #
+    #     c = alt.Chart(df).mark_circle().encode(
+    #         x='a', y='b', size='c', color='c', tooltip=['a', 'b', 'c'])
+    #
+    #     chart_row.altair_chart(c, use_container_width=True)
 
-    # clearing all the elements
+    # df = pd.DataFrame(
+    #     np.random.randn(200, 3),
+    #     columns=['a', 'b', 'c'])
+    # df["index"] = df.index
+    # st.write(df)
+    # st.write(len(df))
+    # chart = alt.Chart(data=df, autosize="pad").mark_line().encode(
+    #     x="index",
+    #     y=alt.Y("a", scale=alt.Scale(domain=[-5, 5]))
+    # )
+    # st.altair_chart(chart)
 
-    placeholder.empty()
-
+    # df = pd.DataFrame(
+    #     np.random.randn(200, 3),
+    #     columns=['a', 'b', 'c'])
+    # st.vega_lite_chart(df, {
+    #     'mark': {'type': 'circle', 'tooltip': True},
+    #     'encoding': {
+    #         'x': {'field': 'a', 'type': 'quantitative'},
+    #         'y': {'field': 'b', 'type': 'quantitative'},
+    #         'size': {'field': 'c', 'type': 'quantitative'},
+    #         'color': {'field': 'c', 'type': 'quantitative'},
+    #     },
+    # })

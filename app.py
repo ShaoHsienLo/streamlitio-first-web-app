@@ -1,6 +1,6 @@
 import streamlit as st
 # from streamlit_option_menu import option_menu
-from views import page1, page2, page3, dashboard
+from views import history_search, page2, page3, dashboard
 
 st.set_page_config(layout="wide", page_title="Dashboard")
 
@@ -29,16 +29,16 @@ st.set_page_config(layout="wide", page_title="Dashboard")
 
 
 # 多頁面導航欄設置
-tab0, tab1, tab2, tab3 = st.tabs(["戰情看板", "分頁1", "分頁2", "分頁3"])
+tab0, tab1, tab2 = st.tabs(["戰情看板", "歷史查詢", "其他測試[開發中]"])
 
 with tab0:
-    dashboard.mqtt_sub()
+    dashboard.init()
 
 with tab1:
-    page1.init()
+    history_search.search()
 
 with tab2:
     page2.init()
 
-with tab3:
-    page3.init()
+# with tab3:
+#     page3.init()
