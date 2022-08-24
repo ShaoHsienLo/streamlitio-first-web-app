@@ -5,7 +5,7 @@ import streamlit as st
 
 
 def init():
-    st.markdown("### 我是分頁1")
+    st.markdown("### 宏英戰情看板")
 
 
 def create_page():

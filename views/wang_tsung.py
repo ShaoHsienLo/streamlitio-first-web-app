@@ -74,8 +74,8 @@ def mqtt_sub():
             # 並將refresh歸0，待機數秒，供使用者觀察波形
             if refresh > refresh_threshold:
                 st.success("鋁錠擠製完畢!")
-                postgres(df)
-                # st.success("資料儲存完畢！")
+                # insert_data_to_postgres(df)
+
                 init_data = [[datetime.now().strftime(ISOTIMEFORMAT), df["ingot"].max(),
                               df["discharge"].max(), df["oil_pressure"].max(), df["mould"].max(),
                               df["bucket"].max()]]
@@ -142,6 +142,22 @@ def mqtt_sub():
                 )
                 st.altair_chart(bucket_chart, use_container_width=True)
 
+            # 第三個row，分別表示當前鋁錠品質與前5錠鋁錠的品質(總共6錠)
+            ingots = st.columns(6)
+
+            #
+            quality_subheader_list = ["當前鋁錠品質", "前一錠鋁錠品質", "前二錠鋁錠品質", "前三錠鋁錠品質",
+                                      "前四錠鋁錠品質", "前五錠鋁錠品質"]
+
+            #
+            quality_df = get_qualities_and_reasons(6)
+
+            for i in range(len(ingots)):
+                with ingots[i]:
+                    st.subheader(quality_subheader_list[i])
+                    st.markdown(quality_df["quality"].iloc[i])
+                    st.markdown(quality_df["reason"].iloc[i])
+
         # 即時數據圖更新頻率(秒)
         time.sleep(1)
 
@@ -152,13 +168,25 @@ def mqtt_sub():
     client.loop_stop()
 
 
-def postgres(df):
+def insert_data_to_postgres(df):
     sql_types = {
         "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
         "mould": types.FLOAT, "bucket": types.FLOAT
     }
     engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
     try:
-        df.to_sql('test', engine, index=False, dtype=sql_types)
+        df.to_sql('wang_tsung', engine, index=False, dtype=sql_types)
     except ValueError as e:
-        df.to_sql('test', engine, if_exists="append", index=False, dtype=sql_types)
+        df.to_sql('wang_tsung', engine, if_exists="append", index=False, dtype=sql_types)
+
+
+def get_qualities_and_reasons(n):
+    engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
+    conn = engine.connect()
+    query = """
+        select "quality", "reason" from public.quality order by timestamp desc limit {}
+    """.format(n)
+    query_ = conn.execute(query)
+    df = pd.DataFrame([dict(i) for i in query_])
+
+    return df
