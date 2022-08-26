@@ -5,8 +5,8 @@ from streamlit_option_menu import option_menu
 st.set_page_config(layout="wide", page_title="Dashboard")
 
 # 加入css
-# with open('style.css') as f:
-#     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+with open('style.css') as f:
+    st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
 
 # 多頁面導航欄設置
 # tab0, tab1, tab2 = st.tabs(["戰情看板", "歷史查詢", "其他測試[開發中]"])

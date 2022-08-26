@@ -1,3 +1,4 @@
+import random
 import time
 import altair as alt
 import pandas as pd
@@ -19,7 +20,7 @@ def init():
 
 def on_connect(client, userdata, flags, rc):
     # 連接程序得到響應時所做的動作(印出回應碼rc)
-    # st.write("Connected with result code " + str(rc))
+    st.write("Connected with result code " + str(rc))
 
     # 訂閱/再訂閱
     client.subscribe(st.secrets["mqtt"]["topic"])
@@ -28,7 +29,13 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     global data
 
-    data = pd.DataFrame.from_records(json.loads(msg.payload.decode("utf-8")), index=[0])
+    # data = pd.DataFrame.from_records(json.loads(msg.payload.decode("utf-8")), index=[0])
+    df = pd.DataFrame(json.loads(msg.payload.decode("utf-8")))
+    data_list = [[df["Timestamp"].iloc[0], round(df["ingot"].mean(), 2), round(df["discharge"].mean(), 2),
+                  round(df["oil_pressure"].mean(), 2), round(df["mould"].mean(), 2),
+                  round(df["bucket"].mean(), 2)]]
+    data = pd.DataFrame(data=data_list, columns=["timestamp", "ingot", "discharge", "oil_pressure", "mould", "bucket"])
+    st.write(data)
 
 
 def mqtt_sub():
@@ -74,15 +81,14 @@ def mqtt_sub():
             # 並將refresh歸0，待機數秒，供使用者觀察波形
             if refresh > refresh_threshold:
                 st.success("鋁錠擠製完畢!")
-                postgres(df)
-                # st.success("資料儲存完畢！")
+                # insert_data_to_postgres(df)
+
                 init_data = [[datetime.now().strftime(ISOTIMEFORMAT), df["ingot"].max(),
                               df["discharge"].max(), df["oil_pressure"].max(), df["mould"].max(),
                               df["bucket"].max()]]
                 df = pd.DataFrame(data=init_data, columns=["timestamp", "ingot", "discharge", "oil_pressure",
                                                            "mould", "bucket"], index=[0])
-                refresh = 0
-                time.sleep(4)
+                time.sleep(2)
             else:
                 st.info("鋁錠擠製中...")
                 df = pd.concat([df, data], ignore_index=True)
@@ -142,6 +148,37 @@ def mqtt_sub():
                 )
                 st.altair_chart(bucket_chart, use_container_width=True)
 
+            if refresh > refresh_threshold:
+                # 第三個row，分別表示當前鋁錠品質與前5錠鋁錠的品質(總共6錠)
+                # 更新頻率：refresh歸0時
+                ingots = st.columns(6)
+
+                #
+                quality_text_list = ["當前鋁錠品質", "前一錠品質", "前二錠品質", "前三錠品質", "前四錠品質", "前五錠品質"]
+
+                #
+                quality_df = get_qualities_and_reasons(6)
+
+                # with ingots[0]:
+                #     st.markdown("##### 鋁錠品質")
+                #     st.write("品質分級")
+                #     st.write("異常原因")
+
+                i = 0
+                while i < len(ingots):
+                    with ingots[i]:
+                        tem = round(random.randint(480, 530), 2)
+                        delta = round(random.uniform(-5, 5), 2)
+                        st.write(quality_text_list[i])
+                        st.subheader(quality_df["quality"].iloc[i])
+                        st.metric(quality_df["reason"].iloc[i], "{} °C".format(tem), "{} °C".format(delta))
+                        # st.markdown("##### {}".format(quality_text_list[i - 1]))
+                        # st.write(quality_df["quality"].iloc[i - 1])
+                        # st.write()
+                    i = i + 1
+                i = 0
+                refresh = 0
+
         # 即時數據圖更新頻率(秒)
         time.sleep(1)
 
@@ -152,13 +189,25 @@ def mqtt_sub():
     client.loop_stop()
 
 
-def postgres(df):
+def insert_data_to_postgres(df):
     sql_types = {
         "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
         "mould": types.FLOAT, "bucket": types.FLOAT
     }
     engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
     try:
-        df.to_sql('test', engine, index=False, dtype=sql_types)
+        df.to_sql('wang_tsung', engine, index=False, dtype=sql_types)
     except ValueError as e:
-        df.to_sql('test', engine, if_exists="append", index=False, dtype=sql_types)
+        df.to_sql('wang_tsung', engine, if_exists="append", index=False, dtype=sql_types)
+
+
+def get_qualities_and_reasons(n):
+    engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
+    conn = engine.connect()
+    query = """
+        select "quality", "reason" from public.quality order by timestamp desc limit {}
+    """.format(n)
+    query_ = conn.execute(query)
+    df = pd.DataFrame([dict(i) for i in query_])
+
+    return df
