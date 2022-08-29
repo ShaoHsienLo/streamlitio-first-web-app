@@ -30,7 +30,13 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     global data
 
-    data = pd.DataFrame.from_records(json.loads(msg.payload.decode("utf-8")), index=[0])
+    # data = pd.DataFrame.from_records(json.loads(msg.payload.decode("utf-8")), index=[0])
+    data_ = pd.DataFrame(json.loads(msg.payload.decode("utf-8")))
+    data_ = pd.DataFrame(data_.mean()).transpose()
+    data_ = data_.drop(columns=["pie"])
+    data_.insert(0, "timestamp", datetime.now())
+    data = data_.copy()
+    # st.write(data)
 
     # df = pd.DataFrame(json.loads(msg.payload.decode("utf-8")))
     # timestamp = df["Timestamp"].iloc[0]
@@ -61,10 +67,20 @@ def mqtt_sub():
 
     # [開發階段] 設定初始化圖像的閥值
     # [上線階段] 依照所設定的閥值更新圖像
-    display_data_length = 30
+    display_data_length = 180
 
     # 時間格式
     ISOTIMEFORMAT = "%Y-%m-%d %H:%M:%S"
+
+    # 顯示更新頻率(秒)
+    display_freqency = 1.5
+
+    # 連接postgres與設定資料型態(無自定義統一當作TEXT存入資料庫)
+    engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
+    sql_types = {
+        "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
+        "mould": types.FLOAT, "bucket": types.FLOAT
+    }
 
     while True:
 
@@ -77,6 +93,8 @@ def mqtt_sub():
             if len(data) == 0:
                 continue
 
+            insert_data_to_postgres(data, engine, sql_types)
+
             if not df.empty:
                 df = pd.concat([df, data], ignore_index=True)
             else:
@@ -85,7 +103,7 @@ def mqtt_sub():
 
             # 加入時間軸，因為繪製圖像時不能使用df的index當作x軸資料
             df_have_index = df.copy()
-            df_have_index["time(s)"] = df.index
+            df_have_index["time(s)"] = df.index * display_freqency
 
             # 第一個row，擠錠溫度與出料溫度
             ingot, discharge = st.columns(2)
@@ -174,7 +192,7 @@ def mqtt_sub():
             #     i = 0
 
         # 即時數據圖更新頻率(秒)
-        time.sleep(1)
+        time.sleep(display_freqency)
 
     # 迴圈結束後清空(重置)該容器
     placeholder.empty()
@@ -183,16 +201,16 @@ def mqtt_sub():
     client.loop_stop()
 
 
-def insert_data_to_postgres(df):
-    sql_types = {
-        "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
-        "mould": types.FLOAT, "bucket": types.FLOAT
-    }
-    engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
+def insert_data_to_postgres(df, engine, sql_types):
+    # sql_types = {
+    #     "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
+    #     "mould": types.FLOAT, "bucket": types.FLOAT
+    # }
+    # engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
     try:
-        df.to_sql('wang_tsung', engine, index=False, dtype=sql_types)
+        df.to_sql('realtime', engine, index=False, dtype=sql_types)
     except ValueError as e:
-        df.to_sql('wang_tsung', engine, if_exists="append", index=False, dtype=sql_types)
+        df.to_sql('realtime', engine, if_exists="append", index=False, dtype=sql_types)
 
 
 def get_qualities_and_reasons(n):
