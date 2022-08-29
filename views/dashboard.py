@@ -2,7 +2,7 @@ import random
 import time
 import altair as alt
 import pandas as pd
-import psycopg2
+# import psycopg2
 import streamlit as st
 import paho.mqtt.client as mqtt
 import json
