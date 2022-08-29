@@ -76,11 +76,11 @@ def mqtt_sub():
     display_freqency = 1.5
 
     # 連接postgres與設定資料型態(無自定義統一當作TEXT存入資料庫)
-    engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
-    sql_types = {
-        "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
-        "mould": types.FLOAT, "bucket": types.FLOAT
-    }
+    # engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
+    # sql_types = {
+    #     "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
+    #     "mould": types.FLOAT, "bucket": types.FLOAT
+    # }
 
     while True:
 
@@ -93,7 +93,7 @@ def mqtt_sub():
             if len(data) == 0:
                 continue
 
-            insert_data_to_postgres(data, engine, sql_types)
+            # insert_data_to_postgres(data, engine, sql_types)
 
             if not df.empty:
                 df = pd.concat([df, data], ignore_index=True)
@@ -202,11 +202,6 @@ def mqtt_sub():
 
 
 def insert_data_to_postgres(df, engine, sql_types):
-    # sql_types = {
-    #     "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
-    #     "mould": types.FLOAT, "bucket": types.FLOAT
-    # }
-    # engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
     try:
         df.to_sql('realtime', engine, index=False, dtype=sql_types)
     except ValueError as e:
