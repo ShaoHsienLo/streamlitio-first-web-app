@@ -1,5 +1,5 @@
 pip==22.2.2
-psycopg2==2.9.3
+psycopg2-binary==2.9.3
 pandas==1.4.3
 plotly==5.9.0
 jsonschema==4.9.1
