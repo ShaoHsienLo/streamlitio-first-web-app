@@ -23,7 +23,6 @@ paho-mqtt==1.6.1
 pandas==1.4.3
 Pillow==9.2.0
 protobuf==3.20.1
-psycopg2==2.9.3
 pyarrow==9.0.0
 pydeck==0.8.0b1
 Pygments==2.13.0

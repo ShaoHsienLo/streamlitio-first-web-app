@@ -2,13 +2,12 @@ import random
 import time
 import altair as alt
 import pandas as pd
-import psycopg2
+# import psycopg2
 import streamlit as st
 import paho.mqtt.client as mqtt
 import json
 from sqlalchemy import create_engine, types
 from datetime import datetime
-from math import floor
 
 
 # 建立一個全域變數，讓函數內可以使用該變數
