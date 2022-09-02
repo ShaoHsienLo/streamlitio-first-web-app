@@ -2,7 +2,7 @@ import random
 import time
 import altair as alt
 import pandas as pd
-# import psycopg2
+import psycopg2
 import streamlit as st
 import paho.mqtt.client as mqtt
 import json
@@ -31,11 +31,10 @@ def on_message(client, userdata, msg):
 
     # data = pd.DataFrame.from_records(json.loads(msg.payload.decode("utf-8")), index=[0])
     data_ = pd.DataFrame(json.loads(msg.payload.decode("utf-8")))
-    data_ = pd.DataFrame(data_.mean()).transpose()
     data_ = data_.drop(columns=["pie"])
+    data_ = pd.DataFrame(data_.mean(numeric_only=True)).transpose()
     data_.insert(0, "timestamp", datetime.now())
     data = data_.copy()
-    # st.write(data)
 
     # df = pd.DataFrame(json.loads(msg.payload.decode("utf-8")))
     # timestamp = df["Timestamp"].iloc[0]
@@ -45,7 +44,7 @@ def on_message(client, userdata, msg):
     # data = df
 
 
-def mqtt_sub():
+def create_page():
     # mqtt連線設定
     client = mqtt.Client(transport=st.secrets["mqtt"]["transport"])
     client.on_connect = on_connect
@@ -75,11 +74,11 @@ def mqtt_sub():
     display_freqency = 1.5
 
     # 連接postgres與設定資料型態(無自定義統一當作TEXT存入資料庫)
-    # engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
-    # sql_types = {
-    #     "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
-    #     "mould": types.FLOAT, "bucket": types.FLOAT
-    # }
+    engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
+    sql_types = {
+        "timestamp": types.DateTime, "ingot": types.FLOAT, "discharge": types.FLOAT, "oil_pressure": types.FLOAT,
+        "mould": types.FLOAT, "bucket": types.FLOAT
+    }
 
     while True:
 
@@ -92,13 +91,13 @@ def mqtt_sub():
             if len(data) == 0:
                 continue
 
-            # insert_data_to_postgres(data, engine, sql_types)
-
             if not df.empty:
                 df = pd.concat([df, data], ignore_index=True)
             else:
                 df = data
             df = df.tail(display_data_length)
+
+            insert_data_to_postgres(df.iloc[-1:], engine, sql_types)
 
             # 加入時間軸，因為繪製圖像時不能使用df的index當作x軸資料
             df_have_index = df.copy()
