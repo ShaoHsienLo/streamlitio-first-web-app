@@ -55,7 +55,7 @@ def create_page():
 
     # 設定查詢所需的query
     query = """
-        select * from public.test
+        select * from public.realtime
         where timestamp > '{}'
         and timestamp < '{}'
     """.format(start, end)

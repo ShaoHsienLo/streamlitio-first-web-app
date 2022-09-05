@@ -65,7 +65,7 @@ def create_page():
 
     # [開發階段] 設定初始化圖像的閥值
     # [上線階段] 依照所設定的閥值更新圖像
-    display_data_length = 180
+    display_data_length = 10
 
     # 時間格式
     ISOTIMEFORMAT = "%Y-%m-%d %H:%M:%S"
